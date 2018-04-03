@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from helper import *
 import discord
 import asyncio
 import configparser
@@ -104,8 +105,59 @@ async def on_message(message):
                         else:
                             em.description = "Nobody here :("
             
+        elif command == 'lastGame' or command == 'last':
+            discord_name = message.author.name
+            name_fetch = getGameName(discord_name)
+            name_found = False
+            pubg_name = ""
+            if name_fetch[0] == 0:
+                name_found = True
+                pubg_name = name_fetch[1] 
+                em.description = "name found"
+            else:
+                em.description = name_fetch[1]
+
+            if name_found:
+                print ("searching")
+                url = 'https://api.playbattlegrounds.com/shards/pc-na/players?filter[playerNames]=' + pubg_name
+                header = {
+                        "Authorization": api_key,
+                        "Accept": "application/vnd.api+json"
+                }
+                r = requests.get(url, headers=header)
+                json_player = r.json()
+
+                last_match_id = 0
+
+                if len(json_player['data'][0]['relationships']['matches']['data']) > 0:                 # Determine if there
+                    last_match_id = json_player['data'][0]['relationships']['matches']['data'][0]['id'] # is match data saved
+                                                                                                        # for player
+                if last_match_id != 0:
+                    url = 'https://api.playbattlegrounds.com/shards/pc-na/matches/' + last_match_id     # Retrieve data from
+                    r = requests.get(url, headers=header)                                               # last match
+                    json_match = r.json()
+                    participant_list = []
+                    match_time = json_match['data']['attributes']['createdAt'] 
+                    match_length = json_match['data']['attributes']['duration']
+                    for i in json_match['included']:
+                        if i['type'] == 'participant':
+                            participant_list.append(i)
+
+                    player_stats = {}
+                    for p in participant_list:
+                        if p['attributes']['stats']['name'] == pubg_name:
+                            player_stats = p['attributes']['stats']
+
+                    print ("Match completion time: " + match_time)
+                    print ("Match duration: " + str(match_length))
+                    print (json.dumps(player_stats, indent=4))
+
+
         elif command == 'help':
-            em.description = "Available commands:\n\t{}hello".format(prefix)
+            em.description = "Available commands:\n\t```{0}hello\n".format(prefix) + \
+                "{0}addMe <in-game-name>\n".format(prefix) + \
+                "{0}deleteMe\n".format(prefix)+ \
+                "{0}listPlayers```".format(prefix)
 
         else:
             em.description = "Command not recognized.\nPlease use " + prefix + "help for a list of commands"
