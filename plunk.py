@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from helper import *
 import discord
+import re
 import asyncio
 import configparser
 import requests
@@ -50,18 +51,28 @@ async def on_message(message):
         if command == 'hello':      # Test command
             em.description = "hello there!"
 
-        elif command == 'addMe':      # Adds authors supplied PUBG name to a dictionary with
-            if len(usrIn) != 2:     # the discord name as the key and writes to playerNames.dat
+        elif command == 'addMe' or command == 'add':      # Adds authors supplied PUBG name to a dictionary with
+            if len(usrIn) < 2:     # the discord name as the key and writes to playerNames.dat
                 em.description = "use: {}addMe *<in-game-name>*".format(prefix)
             else:
                 player_dict = {}
-                with open('playerNames.dat', 'w+') as player_data:
-                    if os.stat('playerNames.dat').st_size == 0:
+                if os.path.isfile('playerNames.dat'):
+                    with open('playerNames.dat', 'r') as player_data:
+                        if os.stat('playerNames.dat').st_size == 0:
+                            pass
+                        else:
+                            player_dict = json.load(player_data)
+                else:
+                    with open('playerNames.dat','w+'):
                         pass
-                    else:
-                        player_dict = json.load(player_data)
-                discord_name = message.author.name
-                pubg_name = usrIn[1]
+                discord_name = ""
+                pubg_name = ""
+                if len(usrIn) == 2:
+                    pubg_name = usrIn[1]
+                    discord_name = message.author.name
+                else:
+                    pubg_name = usrIn[2]
+                    discord_name = usrIn[1]
                 player_dict[discord_name] = pubg_name
                 with open('playerNames.dat', 'w') as player_data:
                     json.dump(player_dict, player_data)
@@ -95,13 +106,12 @@ async def on_message(message):
                         em.description = "Data file is empty"
                     else:
                         em.title = ('Registered PUBG Usernames:')
-                        em.description = "__**{0:<30}{1:>30}**__\n".format('Discord Name', 'PUBG Name')
                         player_dict = {}
                         with open('playerNames.dat', 'r') as player_data:
                             player_dict = json.load(player_data)
                         if player_dict:
                             for key in player_dict:
-                                em.description += "{0:<30}{1:>30}\n".format(key, player_dict[key])
+                                em.add_field(name=key,value=player_dict[key], inline=True)
                         else:
                             em.description = "Nobody here :("
             
@@ -113,12 +123,10 @@ async def on_message(message):
             if name_fetch[0] == 0:
                 name_found = True
                 pubg_name = name_fetch[1] 
-                em.description = "name found"
             else:
                 em.description = name_fetch[1]
 
             if name_found:
-                print ("searching")
                 url = 'https://api.playbattlegrounds.com/shards/pc-na/players?filter[playerNames]=' + pubg_name
                 header = {
                         "Authorization": api_key,
@@ -147,10 +155,19 @@ async def on_message(message):
                     for p in participant_list:
                         if p['attributes']['stats']['name'] == pubg_name:
                             player_stats = p['attributes']['stats']
+                    em.title = "Stats for {}'s last game:".format(pubg_name)
+                    em.add_field(name='Match Date',value=match_time,inline=True)
+                    em.add_field(name='Match Duration',value=match_length,inline=True)
+                    em.add_field(name='Finishing Place',value=player_stats['winPlace'],inline=True)
+                    excluded = ['name','killPointsDelta','winPlace','lastWinPoints','killPoints','playerId','winPoints',\
+                            'winPointsDelta','lastKillPoints','mostDamage']
+                    for key in player_stats:
+                        if key not in excluded:
+                            field_name = key
+                            field_value = player_stats[key]
+                            field_name = re.sub("([A-Z])"," \g<0>",field_name)
+                            em.add_field(name=field_name,value=field_value,inline=True)
 
-                    print ("Match completion time: " + match_time)
-                    print ("Match duration: " + str(match_length))
-                    print (json.dumps(player_stats, indent=4))
 
 
         elif command == 'help':
