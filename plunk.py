@@ -11,10 +11,11 @@ config.read('config.ini')
 defaultConfig = config['DEFAULT']
 token = defaultConfig['token']
 prefix = defaultConfig['prefix']
+api_key = defaultConfig['api_key']
 url = "url_here"
 
 header = {
-        "Authorization": "<api-key>",
+        "Authorization": api_key,
         "Accept": "application/vnd.api+json"
 }
 
