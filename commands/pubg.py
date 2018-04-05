@@ -1,5 +1,6 @@
 from misc.helper import *
 from discord.ext import commands
+from pubg_python import PUBG, Shard
 import discord
 import re
 import requests
@@ -11,7 +12,16 @@ class PUBG():
         config.read('config.ini')
         defaultConfig = config['DEFAULT']
         self.api_key = defaultConfig['api_key']
+        self.api = PUBG(self.api_key, Shard.PC_NA)
         self.bot = bot
+
+
+    @commands.command(pass_context=True)
+    async def test(self, ctx):
+        shroud = api.players().filter(player_names['shroud'])[0]
+        shrouds_last = api.matches().get(player.matches[0].id)
+        participants = match.rosters[0].participants
+        print (shrouds_last)
 
     @commands.command(pass_context=True)
     async def last(self, ctx):
