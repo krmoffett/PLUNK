@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-from helper import *
+from lib.helper import *
+from discord.ext import commands
 import discord
 import re
 import asyncio
 import configparser
 import requests
-import json
-import os
 
-client = discord.Client()
+#bot = discord.Client()
 config = configparser.ConfigParser()
 config.read('config.ini')
 defaultConfig = config['DEFAULT']
@@ -16,23 +15,17 @@ token = defaultConfig['token']
 prefix = defaultConfig['prefix']
 preflen = len(prefix)
 api_key = defaultConfig['api_key']
-#url = "url_here"
-#
-#header = {
-#        "Authorization": api_key,
-#        "Accept": "application/vnd.api+json"
-#}
-#
-#r = requests.get(url, headers=header)
+bot = commands.Bot(command_prefix=prefix)
+startup_extensions = ['commands.members', 'commands.pubg']
 
-@client.event
+@bot.event
 async def on_ready():
     print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
+    print(bot.user.name)
+    print(bot.user.id)
     print('------')
 
-@client.event
+""" @bot.event
 # Receive message
 async def on_message(message):
     if message.content[0:preflen] == prefix:
@@ -50,70 +43,6 @@ async def on_message(message):
         #List commands here
         if command == 'hello':      # Test command
             em.description = "hello there!"
-
-        elif command == 'addMe' or command == 'add':      # Adds authors supplied PUBG name to a dictionary with
-            if len(usrIn) < 2:     # the discord name as the key and writes to playerNames.dat
-                em.description = "use: {}addMe *<in-game-name>*".format(prefix)
-            else:
-                player_dict = {}
-                if os.path.isfile('playerNames.dat'):
-                    with open('playerNames.dat', 'r') as player_data:
-                        if os.stat('playerNames.dat').st_size == 0:
-                            pass
-                        else:
-                            player_dict = json.load(player_data)
-                else:
-                    with open('playerNames.dat','w+'):
-                        pass
-                discord_name = ""
-                pubg_name = ""
-                if len(usrIn) == 2:
-                    pubg_name = usrIn[1]
-                    discord_name = message.author.name
-                else:
-                    pubg_name = usrIn[2]
-                    discord_name = usrIn[1]
-                player_dict[discord_name] = pubg_name
-                with open('playerNames.dat', 'w') as player_data:
-                    json.dump(player_dict, player_data)
-                em.description = "Added {} as {}".format(discord_name, pubg_name)
-
-        elif command == 'deleteMe':
-            if len(usrIn) != 1:
-                em.description = "use: {}deleteMe".format(prefix)
-            else:
-                if os.path.isfile('playerNames.dat'):
-                    player_dict = {}
-                    with open('playerNames.dat', 'r') as player_data:
-                        player_dict = json.load(player_data)
-                    discord_name = message.author.name
-                    if discord_name in player_dict:
-                        del player_dict[discord_name]
-                        with open('playerNames.dat', 'w') as player_data:
-                            json.dump(player_dict, player_data)
-                        em.description = "Removed {} from list".format(discord_name)
-                    else:
-                        em.description = "Could not find {} in list".format(discord_name)
-                else:
-                    em.description = "Data file does not exist"
-
-        elif command == 'list' or command == 'listPlayers':
-            if len(usrIn) != 1:
-                em.description = "Unexpected argument detected."
-            else:
-                if os.path.isfile('playerNames.dat'):
-                    if os.stat('playerNames.dat').st_size == 0:
-                        em.description = "Data file is empty"
-                    else:
-                        em.title = ('Registered PUBG Usernames:')
-                        player_dict = {}
-                        with open('playerNames.dat', 'r') as player_data:
-                            player_dict = json.load(player_data)
-                        if player_dict:
-                            for key in player_dict:
-                                em.add_field(name=key,value=player_dict[key], inline=True)
-                        else:
-                            em.description = "Nobody here :("
             
         elif command == 'lastGame' or command == 'last':
             discord_name = message.author.name
@@ -179,6 +108,14 @@ async def on_message(message):
         else:
             em.description = "Command not recognized.\nPlease use " + prefix + "help for a list of commands"
 
-        await client.send_message(message.channel, embed=em)
+        await bot.send_message(message.channel, embed=em)
+ """
+if __name__ == "__main__":
+    for extension in startup_extensions:
+        try:
+            bot.load_extension(extension)
+        except Exception as e:
+            exc = '{}: {}'.format(type(e).__name__, e)
+            print('Failed to load extension {}\n{}'.format(extension, exc))
 
-client.run(token)
+    bot.run(token)

@@ -1,3 +1,6 @@
+# Visual Studio Code
+.vscode
+
 # Config and data files
 *.ini
 *.dat
