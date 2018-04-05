@@ -1,4 +1,4 @@
-from lib.helper import *
+from misc.helper import *
 from discord.ext import commands
 import discord
 import re
