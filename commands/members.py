@@ -92,7 +92,7 @@ class Members():
                 with open('playerNames.dat', 'r') as player_data:
                     player_dict = json.load(player_data)
                 if player_dict:
-                    em = discord.Embed(title="Registered PUBG Usernames:")
+                    em = discord.Embed(title="Registered PUBG Usernames:", color=discord.Colour.orange())
                     for key in player_dict:
                         em.add_field(name=key,value=player_dict[key], inline=True)
                     await self.bot.send_message(ctx.message.channel, embed=em)
