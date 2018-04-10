@@ -39,7 +39,8 @@ class Members():
         
         Parameters:
         discord_name -- The name of the discord user to add
-        pubg_name -- The PUBG in-game name to attach to the discord user"""
+        pubg_name -- The PUBG in-game name to attach to the discord user
+        """
         if not discord_name or not pubg_name:
             await self.bot.say("Missing argument. Please use: `{}help add` for usage instructions".format(self.bot.command_prefix))
             return
@@ -81,7 +82,8 @@ class Members():
         """Removes specified player name from list
         
         Parameters:
-        discord_name -- the name of the discord user to remove from the list"""
+        discord_name -- the name of the discord user to remove from the list
+        """
         if not discord_name:
             await self.bot.say("No name provided. Please use: `{}help delete` for usage instructions".format(self.bot.command_prefix)) 
         if os.path.isfile('playerNames.dat'):

@@ -6,11 +6,11 @@ def getGameName(discord_name):
 
     if os.path.isfile('playerNames.dat'):
         if os.stat('playerNames.dat').st_size == 0:
-            return (1, "Data file is empty")
+            return None
         else:
             with open('playerNames.dat', 'r') as player_data:
                 player_dict = json.load(player_data)
             if discord_name in player_dict:
-                return (0, player_dict[discord_name])
+                return player_dict[discord_name]
             else:
-                return (1, "Player name not found")
+                return None
