@@ -8,8 +8,15 @@ class Members():
         self.bot = bot
 
     @commands.command(pass_context=True)
-    async def addme(self, ctx, game_name : str):
-        """Adds the discord user that called the command to the player list"""
+    async def addme(self, ctx, pubg_name=None):
+        """Adds the discord user that called the command to the player list
+        
+        Parameters:
+        pubg_name -- your in-game name in PUBG
+        """
+        if not pubg_name:
+            await self.bot.say("No name provided. Please use: `{}help addme` for usage instructions".format(self.bot.command_prefix))
+            return
         player_dict = {}
         if os.path.isfile('playerNames.dat'):
             with open('playerNames.dat', 'r') as player_data:
@@ -21,15 +28,21 @@ class Members():
             with open('playerNames.dat','w+'):
                 pass
         discord_name = ctx.message.author.name
-        pubg_name = game_name
         player_dict[discord_name] = pubg_name
         with open('playerNames.dat', 'w') as player_data:
             json.dump(player_dict, player_data)
         await self.bot.say("Added {} as {}".format(discord_name, pubg_name))
         
     @commands.command()
-    async def add(self, discord_name : str, pubg_name : str):
-        """Adds the specified user to the player list"""
+    async def add(self, discord_name=None, pubg_name=None):
+        """Adds the specified user to the player list
+        
+        Parameters:
+        discord_name -- The name of the discord user to add
+        pubg_name -- The PUBG in-game name to attach to the discord user"""
+        if not discord_name or not pubg_name:
+            await self.bot.say("Missing argument. Please use: `{}help add` for usage instructions".format(self.bot.command_prefix))
+            return
         player_dict = {}
         if os.path.isfile('playerNames.dat'):
             with open('playerNames.dat', 'r') as player_data:
@@ -64,13 +77,17 @@ class Members():
             await self.bot.say("Data file does not exist")
     
     @commands.command()
-    async def delete(self, p_name : str):
-        """Removes specified player name from list"""
+    async def delete(self, discord_name=None):
+        """Removes specified player name from list
+        
+        Parameters:
+        discord_name -- the name of the discord user to remove from the list"""
+        if not discord_name:
+            await self.bot.say("No name provided. Please use: `{}help delete` for usage instructions".format(self.bot.command_prefix)) 
         if os.path.isfile('playerNames.dat'):
             player_dict = {}
             with open('playerNames.dat', 'r') as player_data:
                 player_dict = json.load(player_data)
-            discord_name = p_name
             if discord_name in player_dict:
                 del player_dict[discord_name]
                 with open('playerNames.dat', 'w') as player_data:
