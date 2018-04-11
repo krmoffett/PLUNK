@@ -1,4 +1,4 @@
-from misc.helper import getGameName
+from misc.helper import getGameName, parseDate, getTimeSince
 from discord.ext import commands
 from pubg_python import PUBG, Shard
 import discord
@@ -16,6 +16,8 @@ class Battlegrounds():
     def embedStats(self, match, participant):
         """Take in player and match objects to be embedded for message"""
         em = discord.Embed(colour = discord.Colour.orange())
+        match_datetime = parseDate(match.created_at)
+        em.description = "Created At: {}, {} UTC".format(match_datetime[0], match_datetime[1])
         em.add_field(name='Match Type', value=match.game_mode, inline=True)
         em.add_field(name='Match Duration', value=match.duration, inline=True)
         em.add_field(name='Finishing Place', value=participant.win_place, inline=True)
