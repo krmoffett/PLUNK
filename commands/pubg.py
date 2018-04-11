@@ -16,7 +16,6 @@ class Battlegrounds():
     def embedStats(self, match, participant):
         """Take in player and match objects to be embedded for message"""
         em = discord.Embed(colour = discord.Colour.orange())
-        em.title = "Stat's for {}'s last game".format(participant.name)
         em.add_field(name='Match Type', value=match.game_mode, inline=True)
         em.add_field(name='Match Duration', value=match.duration, inline=True)
         em.add_field(name='Finishing Place', value=participant.win_place, inline=True)
@@ -60,6 +59,7 @@ class Battlegrounds():
                     player_found = True
                     print (participant.name + "Game Found")
                     em = self.embedStats(last_match, participant)
+                    em.title = "Stat's for {}'s last game".format(participant.name)
                     await self.bot.send_message(ctx.message.channel, embed=em)
                     break
         if player_found == False:
