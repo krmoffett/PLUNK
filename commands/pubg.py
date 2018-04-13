@@ -27,7 +27,7 @@ class Battlegrounds():
         em.add_field(name='Walk Distance', value=str(participant.walk_distance) + "m", inline=True)
         em.add_field(name='Ride Distance', value=str(participant.ride_distance) + "m", inline=True)
         em.add_field(name='Team Kills', value=participant.team_kills, inline=True)
-        em.add_field(name='Killed by:', value=killer, inline=True)
+        em.add_field(name='Killed by', value=killer, inline=True)
         return em    
 
     @commands.command(pass_context=True)
@@ -45,16 +45,17 @@ class Battlegrounds():
         if supplied_name:
             pubg_name = supplied_name
         print ("Searching for {}'s last game".format(pubg_name))
+        search_message = await self.bot.send_message(ctx.message.channel, "Searching...")
         player = None
         try:
             player = self.api.players().filter(player_names=[pubg_name])[0]
         except Exception:
-            await self.bot.say("{} not found".format(pubg_name))
+            await self.bot.edit_message(search_message, "{} not found".format(pubg_name))
             return
         try:
             last_match = self.api.matches().get(player.matches[0].id)
         except Exception:
-            await self.bot.say("No recent matchs for {}".format(pubg_name))
+            await self.bot.edit_message(search_message, "No recent matchs for {}".format(pubg_name))
         asset = last_match.assets[0]
         telemetry = self.api.telemetry(asset.url)
         player_kill_events = telemetry.events_from_type('LogPlayerKill')
@@ -70,7 +71,7 @@ class Battlegrounds():
                     print (participant.name + "Game Found")
                     em = self.embedStats(last_match, participant, killer)
                     em.title = "Stat's for {}'s last game".format(participant.name)
-                    await self.bot.send_message(ctx.message.channel, embed=em)
+                    await self.bot.edit_message(search_message, new_content="Game Found", embed=em)
                     break
         if player_found == False:
             print ("Player not found")
