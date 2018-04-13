@@ -13,13 +13,13 @@ class Battlegrounds():
         self.api = PUBG(self.api_key, Shard.PC_NA)
         self.bot = bot
 
-    def embedStats(self, match, participant):
+    def embedStats(self, match, participant, killer):
         """Take in player and match objects to be embedded for message"""
         em = discord.Embed(colour = discord.Colour.orange())
         match_datetime = parseDate(match.created_at)
         em.description = "Created At: {}, {} UTC".format(match_datetime[0], match_datetime[1])
+        em.description += "\nMatch ID: {}".format(match.id)
         em.add_field(name='Match Type', value=match.game_mode, inline=True)
-        em.add_field(name='Match Duration', value=match.duration, inline=True)
         em.add_field(name='Finishing Place', value=participant.win_place, inline=True)
         em.add_field(name='Kills', value=participant.kills, inline=True)
         em.add_field(name='Assists', value=participant.assists, inline=True)
@@ -27,6 +27,7 @@ class Battlegrounds():
         em.add_field(name='Walk Distance', value=str(participant.walk_distance) + "m", inline=True)
         em.add_field(name='Ride Distance', value=str(participant.ride_distance) + "m", inline=True)
         em.add_field(name='Team Kills', value=participant.team_kills, inline=True)
+        em.add_field(name='Killed by:', value=killer, inline=True)
         return em    
 
     @commands.command(pass_context=True)
@@ -54,13 +55,20 @@ class Battlegrounds():
             last_match = self.api.matches().get(player.matches[0].id)
         except Exception:
             await self.bot.say("No recent matchs for {}".format(pubg_name))
+        asset = last_match.assets[0]
+        telemetry = self.api.telemetry(asset.url)
+        player_kill_events = telemetry.events_from_type('LogPlayerKill')
+        killer = "#unkown"
+        for event in player_kill_events:
+            if event.victim.name == pubg_name:
+                killer = event.killer.name
         player_found = False
         for roster in last_match.rosters:
             for participant in roster.participants:
                 if participant.name == pubg_name:
                     player_found = True
                     print (participant.name + "Game Found")
-                    em = self.embedStats(last_match, participant)
+                    em = self.embedStats(last_match, participant, killer)
                     em.title = "Stat's for {}'s last game".format(participant.name)
                     await self.bot.send_message(ctx.message.channel, embed=em)
                     break
