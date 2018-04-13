@@ -55,7 +55,7 @@ class Battlegrounds():
         try:
             last_match = self.api.matches().get(player.matches[0].id)
         except Exception:
-            await self.bot.edit_message(search_message, "No recent matchs for {}".format(pubg_name))
+            await self.bot.edit_message(search_message, "No recent matches for {}".format(pubg_name))
         asset = last_match.assets[0]
         telemetry = self.api.telemetry(asset.url)
         player_kill_events = telemetry.events_from_type('LogPlayerKill')
@@ -75,6 +75,47 @@ class Battlegrounds():
                     break
         if player_found == False:
             print ("Player not found")
+
+    @commands.command(pass_context=True)
+    async def matches(self, ctx, supplied_name=None): 
+        """NEED HIGHER RATE LIMIT FOR THIS
+        Returns a list of the last 5 matches for a player to choose from.
+
+        Requires a response from the user. The bot will then find the stats of the selected game.
+        Parameters:
+        supplied-name -- the PUBG in game name to search for
+        """
+        if not supplied_name and not getGameName(ctx.message.author.name):
+            await self.bot.say("No name found. Please use: `{}help matches` for usage instructions".format(self.bot.command_prefix))
+            return
+        pubg_name = getGameName(ctx.message.author.name)
+        if supplied_name:
+            pubg_name = supplied_name
+        print ("Searching for {}'s last game".format(pubg_name))
+        search_message = await self.bot.send_message(ctx.message.channel, "Searching...")
+        player = None
+        try:
+            player = self.api.players().filter(player_names=[pubg_name])[0]
+        except Exception:
+            await self.bot.edit_message(search_message, "{} not found".format(pubg_name))
+            return
+        
+        matches = []
+        try:
+            for m in player.matches[0:5]:
+                matches.append(self.api.matches().get(m))
+        except Exception as e:
+            print(type(e).__name__, e)
+            await self.bot.edit_message(search_message, "No recent matches for {}".format(pubg_name))
+            return
+        words = "***Most recent matches for {}***".format(pubg_name)
+        for idx,m in enumerate(matches):
+            for roster in m.rosters:
+                for participant in roster.participants:
+                    if participant.name == pubg_name:
+                        words += "\n{}. *Date:* {}\t*Mode:*{}\t*Rank:*{}".format((idx-1), parseDate(m.created_at)[0], \
+                        m.game_mode, participant.win_place)
+        await self.bot.edit_message(search_message, words)
 
 def setup(bot):
     bot.add_cog(Battlegrounds(bot))
