@@ -3,6 +3,7 @@ from discord.ext import commands
 from pubg_python import PUBG, Shard
 import discord
 import configparser
+import time
 
 class Battlegrounds():
     def __init__(self, bot):
@@ -44,7 +45,6 @@ class Battlegrounds():
         pubg_name = getGameName(ctx.message.author.name)
         if supplied_name:
             pubg_name = supplied_name
-        print ("Searching for {}'s last game".format(pubg_name))
         search_message = await self.bot.send_message(ctx.message.channel, "Searching...")
         player = None
         try:
@@ -56,6 +56,7 @@ class Battlegrounds():
             last_match = self.api.matches().get(player.matches[0].id)
         except Exception:
             await self.bot.edit_message(search_message, "No recent matches for {}".format(pubg_name))
+            return
         asset = last_match.assets[0]
         telemetry = self.api.telemetry(asset.url)
         player_kill_events = telemetry.events_from_type('LogPlayerKill')
@@ -68,7 +69,6 @@ class Battlegrounds():
             for participant in roster.participants:
                 if participant.name == pubg_name:
                     player_found = True
-                    print (participant.name + "Game Found")
                     em = self.embedStats(last_match, participant, killer)
                     em.title = "Stat's for {}'s last game".format(participant.name)
                     await self.bot.edit_message(search_message, new_content="Game Found", embed=em)
@@ -91,7 +91,6 @@ class Battlegrounds():
         pubg_name = getGameName(ctx.message.author.name)
         if supplied_name:
             pubg_name = supplied_name
-        print ("Searching for {}'s last game".format(pubg_name))
         search_message = await self.bot.send_message(ctx.message.channel, "Searching...")
         player = None
         try:
@@ -100,22 +99,55 @@ class Battlegrounds():
             await self.bot.edit_message(search_message, "{} not found".format(pubg_name))
             return
         
-        matches = []
-        try:
-            for m in player.matches[0:5]:
-                matches.append(self.api.matches().get(m))
-        except Exception as e:
-            print(type(e).__name__, e)
-            await self.bot.edit_message(search_message, "No recent matches for {}".format(pubg_name))
-            return
-        words = "***Most recent matches for {}***".format(pubg_name)
-        for idx,m in enumerate(matches):
-            for roster in m.rosters:
-                for participant in roster.participants:
-                    if participant.name == pubg_name:
-                        words += "\n{}. *Date:* {}\t*Mode:*{}\t*Rank:*{}".format((idx-1), parseDate(m.created_at)[0], \
-                        m.game_mode, participant.win_place)
+        words = "***Most recent matches for {}:***".format(pubg_name)
+        for idx,m in enumerate(player.matches[0:5]):
+            words += "\n{}. ID: {}".format(idx+1, m)
+
         await self.bot.edit_message(search_message, words)
+    
+        await self.bot.add_reaction(search_message, '\N{DIGIT ONE}\N{COMBINING ENCLOSING KEYCAP}')
+        await self.bot.add_reaction(search_message, '\N{DIGIT TWO}\N{COMBINING ENCLOSING KEYCAP}')
+        await self.bot.add_reaction(search_message, '\N{DIGIT THREE}\N{COMBINING ENCLOSING KEYCAP}')
+        await self.bot.add_reaction(search_message, '\N{DIGIT FOUR}\N{COMBINING ENCLOSING KEYCAP}')
+        await self.bot.add_reaction(search_message, '\N{DIGIT FIVE}\N{COMBINING ENCLOSING KEYCAP}')
+
+        re_message = await self.bot.wait_for_reaction(['\N{DIGIT ONE}\N{COMBINING ENCLOSING KEYCAP}', '\N{DIGIT TWO}\N{COMBINING ENCLOSING KEYCAP}', \
+        '\N{DIGIT THREE}\N{COMBINING ENCLOSING KEYCAP}', '\N{DIGIT FOUR}\N{COMBINING ENCLOSING KEYCAP}', '\N{DIGIT FIVE}\N{COMBINING ENCLOSING KEYCAP}'], \
+        message=search_message, user=ctx.message.author)
+
+        if re_message.reaction.emoji == '\N{DIGIT ONE}\N{COMBINING ENCLOSING KEYCAP}':
+            match_index = 0
+        elif re_message.reaction.emoji == '\N{DIGIT TWO}\N{COMBINING ENCLOSING KEYCAP}':
+            match_index = 1
+        elif re_message.reaction.emoji == '\N{DIGIT THREE}\N{COMBINING ENCLOSING KEYCAP}':
+            match_index = 2
+        elif re_message.reaction.emoji == '\N{DIGIT FOUR}\N{COMBINING ENCLOSING KEYCAP}':
+            match_index = 3
+        elif re_message.reaction.emoji == '\N{DIGIT FIVE}\N{COMBINING ENCLOSING KEYCAP}':
+            match_index = 4
+
+        match_message = await self.bot.say("Searching for match {}...".format(player.matches[match_index]))
+        await self.bot.clear_reactions(search_message)
+
+        try:
+            last_match = self.api.matches().get(player.matches[match_index].id)
+        except Exception:
+            await self.bot.edit_message(match_message, "Match data not available")
+            return
+        asset = last_match.assets[0]
+        telemetry = self.api.telemetry(asset.url)
+        player_kill_events = telemetry.events_from_type('LogPlayerKill')
+        killer = "#unkown"
+        for event in player_kill_events:
+            if event.victim.name == pubg_name:
+                killer = event.killer.name
+        for roster in last_match.rosters:
+            for participant in roster.participants:
+                if participant.name == pubg_name:
+                    em = self.embedStats(last_match, participant, killer)
+                    em.title = "Stat's for {}'s last game".format(participant.name)
+                    await self.bot.edit_message(match_message, new_content="Game Found", embed=em)
+                    break
 
 def setup(bot):
     bot.add_cog(Battlegrounds(bot))
