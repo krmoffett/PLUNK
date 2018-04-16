@@ -78,8 +78,7 @@ class Battlegrounds():
 
     @commands.command(pass_context=True)
     async def matches(self, ctx, supplied_name=None): 
-        """NEED HIGHER RATE LIMIT FOR THIS
-        Returns a list of the last 5 matches for a player to choose from.
+        """Returns a list of the last 5 matches for a player to choose from.
 
         Requires a response from the user. The bot will then find the stats of the selected game.
         Parameters:
