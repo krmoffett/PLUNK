@@ -5,7 +5,7 @@ discord.py - https://github.com/Rapptz/discord.py
 pubg-python - https://github.com/ramonsaraiva/pubg-python
 
 ### Setup
-1. Set up bot user in discordapp.developers and obtain token
+1. Set up bot user in discordapp.com/developers and obtain token
 2. Remove .template from config.ini.template
 3. Copy bot token into the token field and PUBG Developer API key into the api-key field
 4. The prefix used by the bot may be changed here also
