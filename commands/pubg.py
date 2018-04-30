@@ -148,5 +148,30 @@ class Battlegrounds():
                     await self.bot.edit_message(match_message, new_content="Game Found", embed=em)
                     break
 
+    @commands.command(pass_context=True)
+    async def season(self, ctx, player_name=None):
+        """Returns season stats for a player to choose from.
+
+        Requires a response from the user. The bot will then find the season stats of the selected game mode.
+        Parameters:
+        player-name -- the PUBG in game name to search for
+        """
+        if not player_name and not getGameName(ctx.message.author.name):
+            await self.bot.say("No name found. Please use: `{}help matches` for usage instructions".format(self.bot.command_prefix))
+            return
+        pubg_name = getGameName(ctx.message.author.name)
+        if player_name:
+            pubg_name = player_name
+        search_message = await self.bot.send_message(ctx.message.channel, "Searching...")
+        player = None
+        try:
+            player = self.api.players().filter(player_names=[pubg_name])[0]
+        except Exception:
+            await self.bot.edit_message(search_message, "{} not found".format(pubg_name))
+            return
+        player_id = player.id
+
+        # Make api call for season data with player_id
+
 def setup(bot):
     bot.add_cog(Battlegrounds(bot))
